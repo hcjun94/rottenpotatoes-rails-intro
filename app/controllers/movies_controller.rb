@@ -7,12 +7,10 @@ class MoviesController < ApplicationController
   end
 
   def index
-
     if params[:sort].nil? && params[:ratings].nil? &&
         (!session[:sort].nil? || !session[:ratings].nil?)
       redirect_to movies_path(:sort => session[:sort], :ratings => session[:ratings])
     end
-
     @sort = params[:sort]
     @ratings = params[:ratings] 
     if @ratings.nil?
@@ -20,12 +18,10 @@ class MoviesController < ApplicationController
     else
       ratings = @ratings.keys
     end
-
     @all_ratings = Movie.ratings.inject(Hash.new) do |all_ratings, rating|
           all_ratings[rating] = @ratings.nil? ? false : @ratings.has_key?(rating) 
           all_ratings
       end
-      
     if !@sort.nil?
       begin
         @movies = Movie.order(":rating ASC").where(rating: ratings)
@@ -36,7 +32,6 @@ class MoviesController < ApplicationController
     else
       @movies = Movie.where(rating: ratings)
     end
-
     session[:sort] = @sort
     session[:ratings] = @ratings
   end
@@ -44,6 +39,7 @@ class MoviesController < ApplicationController
   def new
     # default: render 'new' template
   end
+  
   def movie_params
     params.require(:movie).permit(:title, :rating, :release_date)
   end
