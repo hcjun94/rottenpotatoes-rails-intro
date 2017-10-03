@@ -24,7 +24,7 @@ class MoviesController < ApplicationController
       end
     if !@sort.nil?
       begin
-        @movies = Movie.order(":rating ASC").where(rating: ratings)
+        @movies = Movie.order(@sort).where(rating: ratings)
       rescue ActiveRecord::StatementInvalid
         flash[:warning] = "Movies cannot be sorted by #{@sort}."
         @movies = Movie.where(rating: ratings)
