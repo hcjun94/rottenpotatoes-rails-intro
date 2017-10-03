@@ -1,9 +1,5 @@
 class MoviesController < ApplicationController
 
-  def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date)
-  end
-
   def show
     id = params[:id] # retrieve movie ID from URI route
     @movie = Movie.find(id) # look up movie by unique ID
@@ -11,33 +7,45 @@ class MoviesController < ApplicationController
   end
 
   def index
+
+    if params[:sort].nil? && params[:ratings].nil? &&
+        (!session[:sort].nil? || !session[:ratings].nil?)
+      redirect_to movies_path(:sort => session[:sort], :ratings => session[:ratings])
+    end
+
     @sort = params[:sort]
-    @ratings = params[:ratings]
+    @ratings = params[:ratings] 
     if @ratings.nil?
-      ratings = Movie.ratings
+      ratings = Movie.ratings 
     else
       ratings = @ratings.keys
     end
-    
+
     @all_ratings = Movie.ratings.inject(Hash.new) do |all_ratings, rating|
-      all_ratings[rating] = @ratings.nil? ? false : @ratings.has_key?(rating)
-      all_ratings
-    end
-    
+          all_ratings[rating] = @ratings.nil? ? false : @ratings.has_key?(rating) 
+          all_ratings
+      end
+      
     if !@sort.nil?
       begin
-        @movies = Movie.order("#{@sort} ASC").find_all_by_rating(ratings)
+        @movies = Movie.order(":rating ASC").where(rating: ratings)
       rescue ActiveRecord::StatementInvalid
         flash[:warning] = "Movies cannot be sorted by #{@sort}."
-        @movies = Movie.find_all_by_rating(ratings)
+        @movies = Movie.where(rating: ratings)
       end
     else
-      @movies = Movie.find_all_by_rating(ratings)
+      @movies = Movie.where(rating: ratings)
     end
+
+    session[:sort] = @sort
+    session[:ratings] = @ratings
   end
 
   def new
     # default: render 'new' template
+  end
+  def movie_params
+    params.require(:movie).permit(:title, :rating, :release_date)
   end
 
   def create
@@ -52,7 +60,7 @@ class MoviesController < ApplicationController
 
   def update
     @movie = Movie.find params[:id]
-    @movie.update_attributes!(movie_params)
+    @movie.update_attributes!(params[:movie])
     flash[:notice] = "#{@movie.title} was successfully updated."
     redirect_to movie_path(@movie)
   end
